@@ -2,52 +2,65 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'
-        jdk 'JDK11'
+        jdk 'JDK21'       
+        maven 'Maven'     
+    }
+
+    environment {
+        RECIPIENTS = 'nivedha6698@gmail.com'
     }
 
     stages {
 
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/Nivedha6698/Jenkins_App.git'
+                echo "🔹 Stage 1: Cloning the GitHub repository..."
+                git branch: 'main', url: 'https://github.com/Nivedha6698/Jenkins_App.git', credentialsId: 'githubtoken'
+                echo "Repository cloned successfully."
             }
         }
 
-        stage('Build') {
+        stage('Build & Package') {
             steps {
-                sh 'mvn clean compile'
+                echo "🔹 Stage 2: Building the project with Maven..."
+                sh 'mvn clean package'
+                echo "Maven build and package completed."
             }
         }
 
-        stage('Test') {
+        stage('Archive Artifacts') {
             steps {
-                sh 'mvn test'
+                echo "🔹 Stage 3: Archiving build artifacts..."
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                echo "Artifacts archived successfully."
             }
         }
 
-        stage('Package') {
+        stage('Run Application') {
             steps {
-                sh 'mvn package'
+                echo "🔹 Stage 4: Running the application..."
+                sh 'java -cp target/classes Hello'
+                echo "Application ran successfully."
             }
         }
-
     }
 
     post {
         success {
+            echo "Build succeeded! Sending success email..."
             emailext(
-                to: 'nivedha6698@gmail.com',
-                subject: "Build Success: ${env.JOB_NAME}",
-                body: "Build completed successfully"
+                to: "${env.RECIPIENTS}",
+                subject: "Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Build completed successfully! \nCheck Jenkins job: ${env.BUILD_URL}"
             )
         }
 
         failure {
+            echo "Build failed! Sending failure email..."
             emailext(
-                to: 'nivedha6698@gmail.com',
-                subject: "Build Failed: ${env.JOB_NAME}",
-                body: "Build failed"
+                to: "${env.RECIPIENTS}",
+                subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Build failed! \nCheck Jenkins job: ${env.BUILD_URL}"
             )
         }
     }
