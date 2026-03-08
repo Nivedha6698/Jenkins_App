@@ -35,7 +35,7 @@ pipeline {
         stage('Run Application') {
             steps {
                 echo "🔹 Stage 4: Running the application..."
-                sh 'java -cp target/classes Hello'
+                sh 'java -cp target/classes HelloWorld'
                 echo "Application ran successfully."
             }
         }
